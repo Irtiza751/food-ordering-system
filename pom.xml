@@ -19,6 +19,7 @@
   <url>http://maven.apache.org</url>
   <modules>
     <module>order-service</module>
+    <module>common</module>
   </modules>
 
   <properties>
@@ -53,6 +54,11 @@
         <artifactId>order-dataaccess</artifactId>
         <version>${project.version}</version>
       </dependency>
+      <dependency>
+        <groupId>com.food.ordering.system</groupId>
+        <artifactId>common-domain</artifactId>
+        <version>${project.version}</version>
+      </dependency>
     </dependencies>
   </dependencyManagement>
 
@@ -66,7 +72,7 @@
         <artifactId>maven-compiler-plugin</artifactId>
         <version>${maven-compiler-plugin.version}</version>
         <configuration>
-          <release>17</release>
+          <release>21</release>
         </configuration>
       </plugin>
     </plugins>
