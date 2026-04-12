@@ -8,6 +8,7 @@ import com.food.ordering.system.order.service.domain.valueobject.OrderItemId;
 import com.food.ordering.system.order.service.domain.valueobject.StreetAddress;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 public class Order extends AggregateRoot<OrderId> {
@@ -70,6 +71,46 @@ public class Order extends AggregateRoot<OrderId> {
         long itemId = 1;
         for (OrderItem orderItem : items) {
             orderItem.initializeOrderItem(super.getId(), new OrderItemId(itemId++));
+        }
+    }
+
+    public void pay() {
+        if(orderStatus != OrderStatus.PENDING) {
+            throw new OrderDomainException("Order is not in correct state for pay operation!");
+        }
+        orderStatus = OrderStatus.PAID;
+    }
+
+    public void approve() {
+        if(orderStatus != OrderStatus.PAID) {
+            throw new OrderDomainException("Order is not in correct state for approve operation!");
+        }
+        orderStatus = OrderStatus.APPROVED;
+    }
+
+    public void initCancel(List<String> failureMessages) {
+        if(orderStatus != OrderStatus.PAID) {
+            throw new OrderDomainException("Order is not in correct state for initCancel operation!");
+        }
+        orderStatus = OrderStatus.CANCELING;
+        updateFailureMessages(failureMessages);
+    }
+
+
+    public void cancel(List<String> failureMessages) {
+        if(!(orderStatus == OrderStatus.PENDING || orderStatus == OrderStatus.CANCELING)) {
+            throw new OrderDomainException("Order is not in correct state for cancel operation!");
+        }
+        orderStatus = OrderStatus.CANCELED;
+        updateFailureMessages(failureMessages);
+    }
+
+    private void updateFailureMessages(List<String> failureMessages) {
+        if(Objects.nonNull(this.failureMessages) && Objects.nonNull(failureMessages)) {
+            this.failureMessages.addAll(failureMessages.stream().filter(message -> !message.isEmpty()).toList());
+        }
+        if(this.failureMessages == null) {
+            this.failureMessages = failureMessages;
         }
     }
 
