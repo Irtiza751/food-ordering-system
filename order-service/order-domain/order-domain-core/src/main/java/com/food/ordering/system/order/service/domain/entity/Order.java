@@ -14,7 +14,8 @@ import java.util.UUID;
 public class Order extends AggregateRoot<OrderId> {
     private final CustomerId customerId;
     private final RestaurantId restaurantId;
-    private final StreetAddress streetAddress;
+    // NOTE: street address is delivery address
+    private final StreetAddress deliveryAddress;
     private final List<OrderItem>  items;
     private final Money price;
     private final Money total;
@@ -118,7 +119,7 @@ public class Order extends AggregateRoot<OrderId> {
         super.setId(builder.orderId);
         customerId = builder.customerId;
         restaurantId = builder.restaurantId;
-        streetAddress = builder.streetAddress;
+        deliveryAddress = builder.deliveryAddress;
         price = builder.price;
         total = builder.total;
         items = builder.items;
@@ -136,7 +137,7 @@ public class Order extends AggregateRoot<OrderId> {
     }
 
     public StreetAddress getStreetAddress() {
-        return streetAddress;
+        return deliveryAddress;
     }
 
     public List<OrderItem> getItems() {
@@ -163,11 +164,15 @@ public class Order extends AggregateRoot<OrderId> {
         return total;
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public static final class Builder {
         private OrderId orderId;
         private CustomerId customerId;
         private RestaurantId restaurantId;
-        private StreetAddress streetAddress;
+        private StreetAddress deliveryAddress;
         private List<OrderItem> items;
         private TrackingId trackingId;
         private OrderStatus orderStatus;
@@ -176,10 +181,6 @@ public class Order extends AggregateRoot<OrderId> {
         private Money total;
 
         private Builder() {
-        }
-
-        public static Builder builder() {
-            return new Builder();
         }
 
         public Builder orderId(OrderId orderId) {
@@ -197,8 +198,8 @@ public class Order extends AggregateRoot<OrderId> {
             return this;
         }
 
-        public Builder streetAddress(StreetAddress streetAddress) {
-            this.streetAddress = streetAddress;
+        public Builder deliveryAddress(StreetAddress deliveryAddress) {
+            this.deliveryAddress = deliveryAddress;
             return this;
         }
 

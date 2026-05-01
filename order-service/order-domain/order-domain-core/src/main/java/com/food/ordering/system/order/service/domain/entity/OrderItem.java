@@ -50,6 +50,10 @@ public class OrderItem extends BaseEntity<OrderItemId> {
         return price.isGreaterThanZero() && price.equals(product.getPrice()) && price.multiply(quantity).equals(subtotal);
     }
 
+    public static Builder builder() {
+        return new Builder();
+    }
+
     public static final class Builder {
         private OrderItemId orderItemId;
         private OrderId orderId;
@@ -61,9 +65,6 @@ public class OrderItem extends BaseEntity<OrderItemId> {
         private Builder() {
         }
 
-        public static Builder builder() {
-            return new Builder();
-        }
 
         public Builder id(OrderItemId id) {
             this.orderItemId = id;
