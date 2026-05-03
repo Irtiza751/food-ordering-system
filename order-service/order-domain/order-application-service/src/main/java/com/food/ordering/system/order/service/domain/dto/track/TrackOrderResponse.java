@@ -6,6 +6,7 @@ import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 
+import java.util.List;
 import java.util.UUID;
 
 @Getter
@@ -16,5 +17,5 @@ public class TrackOrderResponse {
     private final UUID orderTrackingId;
     @NotNull
     private final OrderStatus orderStatus;
-    private final String message;
+    private final List<String> failureMessages;
 }
