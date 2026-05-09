@@ -91,7 +91,7 @@ public class OrderItem extends BaseEntity<OrderItemId> {
             return this;
         }
 
-        public Builder subtotal(Money subtotal) {
+        public Builder subTotal(Money subtotal) {
             this.subtotal = subtotal;
             return this;
         }
