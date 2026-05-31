@@ -1,7 +1,7 @@
 package com.food.ordering.system.order.service.domain;
 
+import com.food.ordering.system.domain.event.publisher.DomainEventPublisher;
 import com.food.ordering.system.order.service.domain.entity.Order;
-import com.food.ordering.system.order.service.domain.entity.OrderItem;
 import com.food.ordering.system.order.service.domain.entity.Product;
 import com.food.ordering.system.order.service.domain.entity.Restaurant;
 import com.food.ordering.system.order.service.domain.event.OrderCancelledEvent;
@@ -13,59 +13,30 @@ import lombok.extern.slf4j.Slf4j;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+
+import static com.food.ordering.system.domain.DomainConstants.UTC;
 
 @Slf4j
 public class OrderDomainServiceImpl implements OrderDomainService {
-    private final String UTC = "UTC";
 
     @Override
-    public OrderCreatedEvent validateAndInitiateOrder(Order order, Restaurant restaurant) {
+    public OrderCreatedEvent validateAndInitiateOrder(Order order, Restaurant restaurant,
+                                                      DomainEventPublisher<OrderCreatedEvent>
+                                                              orderCreatedEventDomainEventPublisher) {
         validateRestaurant(restaurant);
         setOrderProductInformation(order, restaurant);
         order.validateOrder();
         order.initializeOrder();
         log.info("Order with id: {} is initiated", order.getId().getValue());
-        return new OrderCreatedEvent(order, ZonedDateTime.now(ZoneId.of(UTC)));
-    }
-
-    private void setOrderProductInformation(Order order, Restaurant restaurant) {
-        Map<Product, Product> productMap = restaurant.getProducts()
-                .stream()
-                .collect(Collectors.toMap(p -> p, p -> p));
-
-        for (OrderItem orderItem : order.getItems()) {
-            Product currentProduct = orderItem.getProduct();
-            Product restaurantProduct = productMap.get(currentProduct);
-
-            if (restaurantProduct != null) {
-                currentProduct.updateWithConfirmNameAndPrice(
-                        restaurantProduct.getName(),
-                        restaurantProduct.getPrice()
-                );
-            }
-        }
-    }
-
-    private void validateRestaurant(Restaurant restaurant) {
-        if(!restaurant.isActive()) {
-            throw new OrderDomainException("Restaurant with id " + restaurant.getId().getValue() + " is not active!");
-        }
+        return new OrderCreatedEvent(order, ZonedDateTime.now(ZoneId.of(UTC)), orderCreatedEventDomainEventPublisher);
     }
 
     @Override
-    public OrderPaidEvent payOrder(Order order) {
+    public OrderPaidEvent payOrder(Order order,
+                                   DomainEventPublisher<OrderPaidEvent> orderPaidEventDomainEventPublisher) {
         order.pay();
         log.info("Order with id: {} is paid", order.getId().getValue());
-        return new OrderPaidEvent(order, ZonedDateTime.now(ZoneId.of(UTC)));
-    }
-
-    @Override
-    public OrderCancelledEvent cancelOrderPayment(Order order, List<String> failureMessages) {
-        order.initCancel(failureMessages);
-        log.info("Order payment cancelling for order id: {}", order.getId().getValue());
-        return new OrderCancelledEvent(order, ZonedDateTime.now(ZoneId.of(UTC)));
+        return new OrderPaidEvent(order, ZonedDateTime.now(ZoneId.of(UTC)), orderPaidEventDomainEventPublisher);
     }
 
     @Override
@@ -75,8 +46,35 @@ public class OrderDomainServiceImpl implements OrderDomainService {
     }
 
     @Override
+    public OrderCancelledEvent cancelOrderPayment(Order order, List<String> failureMessages,
+                                                  DomainEventPublisher<OrderCancelledEvent>
+                                                          orderCancelledEventDomainEventPublisher) {
+        order.initCancel(failureMessages);
+        log.info("Order payment is cancelling for order id: {}", order.getId().getValue());
+        return new OrderCancelledEvent(order, ZonedDateTime.now(ZoneId.of(UTC)),
+                orderCancelledEventDomainEventPublisher);
+    }
+
+    @Override
     public void cancelOrder(Order order, List<String> failureMessages) {
         order.cancel(failureMessages);
-        log.info("Order with id {} is canceled", order.getId().getValue());
+        log.info("Order with id: {} is cancelled", order.getId().getValue());
+    }
+
+    private void validateRestaurant(Restaurant restaurant) {
+        if (!restaurant.isActive()) {
+            throw new OrderDomainException("Restaurant with id " + restaurant.getId().getValue() +
+                    " is currently not active!");
+        }
+    }
+
+    private void setOrderProductInformation(Order order, Restaurant restaurant) {
+        order.getItems().forEach(orderItem -> restaurant.getProducts().forEach(restaurantProduct -> {
+            Product currentProduct = orderItem.getProduct();
+            if (currentProduct.equals(restaurantProduct)) {
+                currentProduct.updateWithConfirmedNameAndPrice(restaurantProduct.getName(),
+                        restaurantProduct.getPrice());
+            }
+        }));
     }
 }
